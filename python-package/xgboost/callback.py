@@ -3,8 +3,19 @@
 """Training Library containing training routines."""
 from __future__ import absolute_import
 
+from abc import ABCMeta, abstractmethod
+
 from . import rabit
 from .core import EarlyStopException
+
+
+class BaseSmartRate(object):
+    __metaclass__ = ABCMeta
+    """Abstract class for handling complex logic of setting learning rate
+    """
+    @abstractmethod
+    def __call__(self, env):
+        pass
 
 
 def _fmt_metric(value, show_stdv=True):
@@ -111,6 +122,8 @@ def reset_learning_rate(learning_rates):
             if len(learning_rates) != env.end_iteration:
                 raise ValueError("Length of list 'learning_rates' has to equal 'num_boost_round'.")
             bst.set_param('learning_rate', learning_rates[i])
+        elif isinstance(learning_rates, BaseSmartRate):
+            bst.set_param('learning_rate', learning_rates(env))
         else:
             bst.set_param('learning_rate', learning_rates(i, env.end_iteration))
     callback.before_iteration = True
